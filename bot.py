@@ -75,11 +75,21 @@ def _is_past_crew(crew: dict) -> bool:
 
 
 def _get_user_crews(uid: int) -> list:
-    created = sb.table("crews").select("*").eq("creator_id", uid).execute().data
-    member_rows = sb.table("crew_members").select("crew_id").eq("user_id", uid).execute().data
-    member_ids = [r["crew_id"] for r in member_rows]
-    joined = sb.table("crews").select("*").in_("id", member_ids).execute().data if member_ids else []
-    return list({c["id"]: c for c in created + joined}.values())
+    created = sb.table("crews").select("*").eq("creator_id", uid).execute().data or []
+    member_rows = sb.table("crew_members").select("crew_id").eq("user_id", uid).execute().data or []
+
+    # Seed the result dict with all created crews (deduplicates by id)
+    all_crews: dict = {c["id"]: c for c in created}
+
+    # Fetch any crews the user joined but didn't create
+    for row in member_rows:
+        cid = row["crew_id"]
+        if cid not in all_crews:
+            rows = sb.table("crews").select("*").eq("id", cid).execute().data or []
+            if rows:
+                all_crews[rows[0]["id"]] = rows[0]
+
+    return list(all_crews.values())
 
 
 def _crew_card(c: dict) -> str:
@@ -124,7 +134,7 @@ async def create_crew_start(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         [InlineKeyboardButton("✍️ Other",            callback_data="occasion_other")],
     ])
     await query.edit_message_text(
-        "➕ *Create a crew*\n\nWhat are you making a crew for?",
+        "➕ *Create a gang*\n\nWhat are you making a gang for?",
         parse_mode="Markdown",
         reply_markup=keyboard,
     )
@@ -178,7 +188,7 @@ async def event_date_text(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         InlineKeyboardButton("4+", callback_data="size_4+"),
     ]])
     await update.message.reply_text(
-        "How many people are already in your crew?",
+        "How many people are already in your gang?",
         reply_markup=keyboard,
     )
     return CREW_SIZE
@@ -242,7 +252,7 @@ async def area(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         InlineKeyboardButton("Skip", callback_data="msg_skip"),
     ]])
     await query.edit_message_text(
-        "💬 Got a one-line message for your crew? _(optional)_\n\n"
+        "💬 Got a one-line message for your gang? _(optional)_\n\n"
         "e.g. _Pregaming around 9_\n\n"
         "Type it below or tap Skip.",
         parse_mode="Markdown",
@@ -253,7 +263,7 @@ async def area(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 def _build_preview(context: ContextTypes.DEFAULT_TYPE) -> tuple[str, InlineKeyboardMarkup]:
     d = context.user_data
-    text = "👯 *CREW*\n\n"
+    text = "👯 *GANG*\n\n"
     if d.get("occasion_type"):
         text += f"{d['occasion_type']}\n"
     if d.get("title"):
@@ -323,7 +333,7 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             crew_id = result.data[0]["id"]
             sb.table("crew_members").insert({"crew_id": crew_id, "user_id": uid}).execute()
             await query.edit_message_text(
-                "✅ *Crew published!*\n\nYour crew is now live. Good luck finding your people! 🎉\n\n"
+                "✅ *Gang published!*\n\nYour gang is now live. Good luck finding your people! 🎉\n\n"
                 "Use /start to return to the menu.",
                 parse_mode="Markdown",
             )
@@ -814,6 +824,7 @@ def main() -> None:
             },
             fallbacks=[CommandHandler("start", start)],
             per_message=False,
+            allow_reentry=True,
         )
 
     app.add_handler(create_crew_conv)

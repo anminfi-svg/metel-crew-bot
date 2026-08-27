@@ -1,4 +1,5 @@
 import os
+import traceback
 import warnings
 from datetime import date, datetime
 from dotenv import load_dotenv
@@ -314,7 +315,7 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         uid = update.effective_user.id
         try:
             sb.table("profiles").upsert({
-                "user_id": uid,
+                "telegram_id": uid,
                 "first_name": update.effective_user.first_name,
                 "username": update.effective_user.username,
             }).execute()
@@ -331,14 +332,14 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
                 "event_date": d.get("event_date"),
             }).execute()
             crew_id = result.data[0]["id"]
-            sb.table("crew_members").insert({"crew_id": crew_id, "user_id": uid}).execute()
+            sb.table("crew_members").insert({"crew_id": crew_id, "telegram_id": uid}).execute()
             await query.edit_message_text(
                 "✅ *Gang published!*\n\nYour gang is now live. Good luck finding your people! 🎉\n\n"
                 "Use /start to return to the menu.",
                 parse_mode="Markdown",
             )
         except Exception as e:
-            print(f"DB error publishing crew: {e}")
+            print(f"DB error publishing crew: {e}\n{traceback.format_exc()}")
             await query.edit_message_text("❌ Something went wrong. Please try again.")
     else:
         await query.edit_message_text("❌ Cancelled.\n\nUse /start to return to the menu.")

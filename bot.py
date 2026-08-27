@@ -77,7 +77,7 @@ def _is_past_crew(crew: dict) -> bool:
 
 def _get_user_crews(uid: int) -> list:
     created = sb.table("crews").select("*").eq("creator_id", uid).execute().data or []
-    member_rows = sb.table("crew_members").select("crew_id").eq("user_id", uid).execute().data or []
+    member_rows = sb.table("crew_members").select("crew_id").eq("telegram_id", uid).execute().data or []
 
     # Seed the result dict with all created crews (deduplicates by id)
     all_crews: dict = {c["id"]: c for c in created}
@@ -362,16 +362,16 @@ async def view_crew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             return
         crew = crew_result.data[0]
 
-        creator_result = sb.table("profiles").select("first_name, username").eq("user_id", crew["creator_id"]).execute()
+        creator_result = sb.table("profiles").select("first_name, username").eq("telegram_id", crew["creator_id"]).execute()
         creator = creator_result.data[0] if creator_result.data else {}
 
-        members_result = sb.table("crew_members").select("user_id").eq("crew_id", crew_id).execute()
-        member_uids = [m["user_id"] for m in members_result.data]
+        members_result = sb.table("crew_members").select("telegram_id").eq("crew_id", crew_id).execute()
+        member_uids = [m["telegram_id"] for m in members_result.data]
 
         member_profiles = {}
         if member_uids:
-            profiles_result = sb.table("profiles").select("user_id, first_name").in_("user_id", member_uids).execute()
-            member_profiles = {p["user_id"]: p for p in profiles_result.data}
+            profiles_result = sb.table("profiles").select("telegram_id, first_name").in_("telegram_id", member_uids).execute()
+            member_profiles = {p["telegram_id"]: p for p in profiles_result.data}
 
         viewer_uid = update.effective_user.id
         pending_result = (
@@ -435,7 +435,7 @@ async def member_profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     crew_id = crew_id_str
 
     try:
-        result = sb.table("profiles").select("first_name, username").eq("user_id", uid).execute()
+        result = sb.table("profiles").select("first_name, username").eq("telegram_id", uid).execute()
         p = result.data[0] if result.data else {}
     except Exception as e:
         print(f"DB error loading member profile: {e}")
@@ -495,7 +495,7 @@ async def request_join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     try:
         sb.table("profiles").upsert({
-            "user_id": uid,
+            "telegram_id": uid,
             "first_name": update.effective_user.first_name,
             "username": update.effective_user.username,
         }).execute()
@@ -547,7 +547,7 @@ async def jview(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await query.edit_message_text("Request not found.")
             return
         req = req_result.data[0]
-        profile_result = sb.table("profiles").select("first_name, username").eq("user_id", req["requester_id"]).execute()
+        profile_result = sb.table("profiles").select("first_name, username").eq("telegram_id", req["requester_id"]).execute()
         p = profile_result.data[0] if profile_result.data else {}
     except Exception as e:
         print(f"DB error loading join request: {e}")
@@ -583,19 +583,19 @@ async def jaccept(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         req = req_result.data[0]
 
         sb.table("join_requests").update({"status": "accepted"}).eq("id", req_id).execute()
-        sb.table("crew_members").insert({"crew_id": req["crew_id"], "user_id": req["requester_id"]}).execute()
+        sb.table("crew_members").insert({"crew_id": req["crew_id"], "telegram_id": req["requester_id"]}).execute()
 
         crew_result = sb.table("crews").select("current_size, creator_id").eq("id", req["crew_id"]).execute()
         crew = crew_result.data[0] if crew_result.data else {}
         new_size = (crew.get("current_size") or 1) + 1
         sb.table("crews").update({"current_size": new_size}).eq("id", req["crew_id"]).execute()
 
-        requester_result = sb.table("profiles").select("first_name, username").eq("user_id", req["requester_id"]).execute()
+        requester_result = sb.table("profiles").select("first_name, username").eq("telegram_id", req["requester_id"]).execute()
         requester_p = requester_result.data[0] if requester_result.data else {}
 
         creator_p = {}
         if crew.get("creator_id"):
-            creator_result = sb.table("profiles").select("username").eq("user_id", crew["creator_id"]).execute()
+            creator_result = sb.table("profiles").select("username").eq("telegram_id", crew["creator_id"]).execute()
             creator_p = creator_result.data[0] if creator_result.data else {}
     except Exception as e:
         print(f"DB error accepting request: {e}")
@@ -642,7 +642,7 @@ async def jdecline(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await query.edit_message_text("This request is no longer pending.")
             return
         req = req_result.data[0]
-        profile_result = sb.table("profiles").select("first_name").eq("user_id", req["requester_id"]).execute()
+        profile_result = sb.table("profiles").select("first_name").eq("telegram_id", req["requester_id"]).execute()
         first_name = profile_result.data[0].get("first_name", "Unknown") if profile_result.data else "Unknown"
         sb.table("join_requests").update({"status": "declined"}).eq("id", req_id).execute()
     except Exception as e:
@@ -714,7 +714,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         try:
             all_crews = _get_user_crews(uid)
         except Exception as e:
-            print(f"DB error loading my crews: {e}")
+            print(f"DB error loading my crews (active): {e}\n{traceback.format_exc()}")
             await query.edit_message_text("Failed to load your crews. Please try again.")
             return
 
@@ -742,7 +742,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         try:
             all_crews = _get_user_crews(uid)
         except Exception as e:
-            print(f"DB error loading my crews: {e}")
+            print(f"DB error loading my crews (past): {e}\n{traceback.format_exc()}")
             await query.edit_message_text("Failed to load your crews. Please try again.")
             return
 
@@ -769,11 +769,11 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     elif query.data == "my_profile":
         try:
             sb.table("profiles").upsert({
-                "user_id": uid,
+                "telegram_id": uid,
                 "first_name": update.effective_user.first_name,
                 "username": update.effective_user.username,
             }).execute()
-            result = sb.table("profiles").select("first_name, username").eq("user_id", uid).execute()
+            result = sb.table("profiles").select("first_name, username").eq("telegram_id", uid).execute()
             p = result.data[0] if result.data else {}
         except Exception as e:
             print(f"DB error loading profile: {e}")

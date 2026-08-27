@@ -28,32 +28,32 @@ sb = create_client(_sb_url, _sb_key)
 OCCASION_TYPE, TITLE, EVENT_DATE, CREW_SIZE, LOOKING_FOR, VIBE, AREA, MESSAGE, CONFIRM = range(9)
 
 MAIN_MENU_TEXT = (
-    "👯 *Crew Finder*\n\n"
-    "Looking for people to go out with?\n"
-    "Find a crew, join one, or create your own."
+    "👯 *ГЭНГ*\n\n"
+    "Идёшь куда-то один? Исправляем.\n"
+    "Собери свою банду или впишись в чужую."
 )
 
 MAIN_MENU_KEYBOARD = InlineKeyboardMarkup([
-    [InlineKeyboardButton("👯 Find a crew",   callback_data="find_crew")],
-    [InlineKeyboardButton("➕ Create a crew", callback_data="create_crew")],
-    [InlineKeyboardButton("🔥 My crews",      callback_data="my_crews")],
-    [InlineKeyboardButton("👤 My profile",    callback_data="my_profile")],
+    [InlineKeyboardButton("👯 Найти гэнг",   callback_data="find_crew")],
+    [InlineKeyboardButton("➕ Создать гэнг", callback_data="create_crew")],
+    [InlineKeyboardButton("🔥 Мои гэнги",    callback_data="my_crews")],
+    [InlineKeyboardButton("👤 Мой профиль",  callback_data="my_profile")],
 ])
 
 OCCASION_LABELS = {
-    "occasion_party":   "🎉 Party / event",
-    "occasion_drinks":  "🍸 Drinks / pregame",
-    "occasion_club":    "🕺 Club night",
-    "occasion_concert": "🎵 Concert / rave",
-    "occasion_hangout": "🏖 Hangout",
-    "occasion_other":   "✍️ Other",
+    "occasion_party":   "🎉 Вечеринка / ивент",
+    "occasion_drinks":  "🍸 Выпить / разогреться",
+    "occasion_club":    "🕺 Ночной клуб",
+    "occasion_concert": "🎵 Концерт / рейв",
+    "occasion_hangout": "🏖 Потусить",
+    "occasion_other":   "✍️ Другое",
 }
 
 VIBE_LABELS = {
-    "vibe_chill":    "🍸 Chill / drinks",
-    "vibe_dance":    "💃 Dance all night",
-    "vibe_fullsend": "🔥 Full send",
-    "vibe_social":   "🫂 Social / meet people",
+    "vibe_chill":    "🍸 Спокойно выпить",
+    "vibe_dance":    "💃 Танцевать до закрытия",
+    "vibe_fullsend": "🔥 Разъеб",
+    "vibe_social":   "🫂 Познакомиться с людьми",
 }
 
 
@@ -94,7 +94,7 @@ def _get_user_crews(uid: int) -> list:
 
 
 def _crew_card(c: dict) -> str:
-    title = c.get("title") or c.get("area", "Unknown")
+    title = c.get("title") or c.get("area", "Неизвестно")
     occasion = c.get("occasion_type")
     ed = c.get("event_date")
 
@@ -107,7 +107,7 @@ def _crew_card(c: dict) -> str:
     if parts:
         lines.append(" · ".join(parts))
     lines.append(f"📍 {c['area']}")
-    lines.append(f"👥 {c['current_size']} people · +{c['spots_needed']} wanted")
+    lines.append(f"👥 {c['current_size']} чел. · ещё {c['spots_needed']} нужно")
     return "\n".join(lines)
 
 
@@ -127,15 +127,15 @@ async def create_crew_start(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     context.user_data.clear()
 
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🎉 Party / event",    callback_data="occasion_party")],
-        [InlineKeyboardButton("🍸 Drinks / pregame", callback_data="occasion_drinks")],
-        [InlineKeyboardButton("🕺 Club night",        callback_data="occasion_club")],
-        [InlineKeyboardButton("🎵 Concert / rave",   callback_data="occasion_concert")],
-        [InlineKeyboardButton("🏖 Hangout",          callback_data="occasion_hangout")],
-        [InlineKeyboardButton("✍️ Other",            callback_data="occasion_other")],
+        [InlineKeyboardButton("🎉 Вечеринка / ивент",    callback_data="occasion_party")],
+        [InlineKeyboardButton("🍸 Выпить / разогреться", callback_data="occasion_drinks")],
+        [InlineKeyboardButton("🕺 Ночной клуб",          callback_data="occasion_club")],
+        [InlineKeyboardButton("🎵 Концерт / рейв",       callback_data="occasion_concert")],
+        [InlineKeyboardButton("🏖 Потусить",             callback_data="occasion_hangout")],
+        [InlineKeyboardButton("✍️ Другое",               callback_data="occasion_other")],
     ])
     await query.edit_message_text(
-        "➕ *Create a gang*\n\nWhat are you making a gang for?",
+        "➕ *Создать гэнг*\n\nПод что собираем людей?",
         parse_mode="Markdown",
         reply_markup=keyboard,
     )
@@ -147,7 +147,7 @@ async def occasion_type_handler(update: Update, context: ContextTypes.DEFAULT_TY
     await query.answer()
     context.user_data["occasion_type"] = OCCASION_LABELS[query.data]
     await query.edit_message_text(
-        "What's it called?\n\ne.g. _METEL Back 2 School_, _Friday drinks_, _Hyde Park picnic_",
+        "Как это называется?\n\nнапример: _METEL Back 2 School_, _пятничные бары_, _пикник_",
         parse_mode="Markdown",
     )
     return TITLE
@@ -156,11 +156,11 @@ async def occasion_type_handler(update: Update, context: ContextTypes.DEFAULT_TY
 async def title_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     title = update.message.text.strip()
     if not title:
-        await update.message.reply_text("Please enter a name for your event.")
+        await update.message.reply_text("Введи название.")
         return TITLE
     context.user_data["title"] = title
     await update.message.reply_text(
-        "📅 When is it?\n\nEnter the date as *DD/MM/YYYY*\ne.g. _11/09/2026_",
+        "📅 Когда движ?\n\nДата в формате *ДД/ММ/ГГГГ*\nнапример: _11/09/2026_",
         parse_mode="Markdown",
     )
     return EVENT_DATE
@@ -172,13 +172,13 @@ async def event_date_text(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         parsed = datetime.strptime(raw, "%d/%m/%Y").date()
     except ValueError:
         await update.message.reply_text(
-            "❌ Invalid date. Please use *DD/MM/YYYY* format, e.g. _11/09/2026_",
+            "❌ Неверный формат. Пиши *ДД/ММ/ГГГГ*, например _11/09/2026_",
             parse_mode="Markdown",
         )
         return EVENT_DATE
 
     if parsed < date.today():
-        await update.message.reply_text("❌ That date is in the past. Please enter a future date.")
+        await update.message.reply_text("❌ Это уже история. Введи будущую дату.")
         return EVENT_DATE
 
     context.user_data["event_date"] = parsed.strftime("%Y-%m-%d")
@@ -189,7 +189,7 @@ async def event_date_text(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         InlineKeyboardButton("4+", callback_data="size_4+"),
     ]])
     await update.message.reply_text(
-        "How many people are already in your gang?",
+        "Сколько вас уже?",
         reply_markup=keyboard,
     )
     return CREW_SIZE
@@ -207,7 +207,7 @@ async def crew_size(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         InlineKeyboardButton("4+", callback_data="looking_4+"),
     ]])
     await query.edit_message_text(
-        "How many more people are you looking for?",
+        "Сколько ещё добираем?",
         reply_markup=keyboard,
     )
     return LOOKING_FOR
@@ -219,12 +219,12 @@ async def looking_for(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     context.user_data["looking_for"] = query.data.removeprefix("looking_")
 
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🍸 Chill / drinks",       callback_data="vibe_chill")],
-        [InlineKeyboardButton("💃 Dance all night",      callback_data="vibe_dance")],
-        [InlineKeyboardButton("🔥 Full send",            callback_data="vibe_fullsend")],
-        [InlineKeyboardButton("🫂 Social / meet people", callback_data="vibe_social")],
+        [InlineKeyboardButton("🍸 Спокойно выпить",        callback_data="vibe_chill")],
+        [InlineKeyboardButton("💃 Танцевать до закрытия",  callback_data="vibe_dance")],
+        [InlineKeyboardButton("🔥 Разъеб",                 callback_data="vibe_fullsend")],
+        [InlineKeyboardButton("🫂 Познакомиться с людьми", callback_data="vibe_social")],
     ])
-    await query.edit_message_text("What's the vibe?", reply_markup=keyboard)
+    await query.edit_message_text("Какой вайб?", reply_markup=keyboard)
     return VIBE
 
 
@@ -238,9 +238,9 @@ async def vibe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         [InlineKeyboardButton("Burnaby",  callback_data="area_Burnaby")],
         [InlineKeyboardButton("Richmond", callback_data="area_Richmond")],
         [InlineKeyboardButton("Surrey",   callback_data="area_Surrey")],
-        [InlineKeyboardButton("Other",    callback_data="area_Other")],
+        [InlineKeyboardButton("Другое",   callback_data="area_Other")],
     ])
-    await query.edit_message_text("📍 Where are you meeting?", reply_markup=keyboard)
+    await query.edit_message_text("📍 Где встречаемся?", reply_markup=keyboard)
     return AREA
 
 
@@ -250,12 +250,12 @@ async def area(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["area"] = query.data.removeprefix("area_")
 
     keyboard = InlineKeyboardMarkup([[
-        InlineKeyboardButton("Skip", callback_data="msg_skip"),
+        InlineKeyboardButton("Пропустить", callback_data="msg_skip"),
     ]])
     await query.edit_message_text(
-        "💬 Got a one-line message for your gang? _(optional)_\n\n"
-        "e.g. _Pregaming around 9_\n\n"
-        "Type it below or tap Skip.",
+        "💬 Добавь что-нибудь для своих _(необязательно)_\n\n"
+        "например: _разгон в 21:00_\n\n"
+        "Напиши или нажми Пропустить.",
         parse_mode="Markdown",
         reply_markup=keyboard,
     )
@@ -264,7 +264,7 @@ async def area(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 def _build_preview(context: ContextTypes.DEFAULT_TYPE) -> tuple[str, InlineKeyboardMarkup]:
     d = context.user_data
-    text = "👯 *GANG*\n\n"
+    text = "👯 *ГЭНГ*\n\n"
     if d.get("occasion_type"):
         text += f"{d['occasion_type']}\n"
     if d.get("title"):
@@ -272,16 +272,16 @@ def _build_preview(context: ContextTypes.DEFAULT_TYPE) -> tuple[str, InlineKeybo
     if d.get("event_date"):
         text += f"📅 {_format_date(d['event_date'])}\n"
     text += (
-        f"\n👥 {d['crew_size']} people already\n"
-        f"➕ Looking for {d['looking_for']} more\n"
+        f"\n👥 Уже {d['crew_size']} чел.\n"
+        f"➕ Ищем ещё {d['looking_for']}\n"
         f"{d['vibe']}\n"
         f"📍 {d['area']}\n"
     )
     if d.get("message"):
         text += f'\n"{d["message"]}"'
     keyboard = InlineKeyboardMarkup([[
-        InlineKeyboardButton("✅ Publish", callback_data="confirm_publish"),
-        InlineKeyboardButton("❌ Cancel",  callback_data="confirm_cancel"),
+        InlineKeyboardButton("✅ Опубликовать", callback_data="confirm_publish"),
+        InlineKeyboardButton("❌ Передумал",    callback_data="confirm_cancel"),
     ]])
     return text, keyboard
 
@@ -334,15 +334,15 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             crew_id = result.data[0]["id"]
             sb.table("crew_members").insert({"crew_id": crew_id, "telegram_id": uid}).execute()
             await query.edit_message_text(
-                "✅ *Gang published!*\n\nYour gang is now live. Good luck finding your people! 🎉\n\n"
-                "Use /start to return to the menu.",
+                "✅ *Гэнг опубликован*\n\nТеперь ждём нормальных людей. Удачи.\n\n"
+                "Напиши /start чтобы вернуться в меню.",
                 parse_mode="Markdown",
             )
         except Exception as e:
             print(f"DB error publishing crew: {e}\n{traceback.format_exc()}")
-            await query.edit_message_text("❌ Something went wrong. Please try again.")
+            await query.edit_message_text("❌ Что-то пошло не так. Попробуй ещё раз.")
     else:
-        await query.edit_message_text("❌ Cancelled.\n\nUse /start to return to the menu.")
+        await query.edit_message_text("❌ Передумал.\n\nНапиши /start чтобы вернуться в меню.")
 
     context.user_data.clear()
     return ConversationHandler.END
@@ -358,7 +358,7 @@ async def view_crew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         crew_result = sb.table("crews").select("*").eq("id", crew_id).execute()
         if not crew_result.data:
-            await query.edit_message_text("Crew not found. Use /start to go back.")
+            await query.edit_message_text("Гэнг не найден. Напиши /start чтобы вернуться.")
             return
         crew = crew_result.data[0]
 
@@ -385,24 +385,24 @@ async def view_crew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         has_pending = len(pending_result.data) > 0
     except Exception as e:
         print(f"DB error loading crew: {e}")
-        await query.edit_message_text("Failed to load crew. Please try again.")
+        await query.edit_message_text("Не удалось загрузить гэнг. Попробуй ещё раз.")
         return
 
     is_past = _is_past_crew(crew)
     total = (crew.get("current_size") or 0) + (crew.get("spots_needed") or 0)
 
-    text = f"👯 *CREW #{crew['id']}*\n\n"
+    text = f"👯 *ГЭНГ #{crew['id']}*\n\n"
     if crew.get("occasion_type"):
         text += f"{crew['occasion_type']}\n"
     if crew.get("title"):
         text += f"{crew['title']}\n"
     if crew.get("event_date"):
         text += f"📅 {_format_date(crew['event_date'])}\n"
-    text += f"\n📍 {crew['area']}\n{crew['vibe']}\n👥 {crew['current_size']}/{total} people\n"
+    text += f"\n📍 {crew['area']}\n{crew['vibe']}\n👥 {crew['current_size']}/{total} чел.\n"
     if crew.get("message"):
         text += f'\n_"{crew["message"]}"_\n'
 
-    creator_line = f"👑 {creator.get('first_name', 'Unknown')}"
+    creator_line = f"👑 {creator.get('first_name', 'Неизвестно')}"
     if creator.get("username"):
         creator_line += f" — @{creator['username']}"
     text += f"\n{creator_line}\n"
@@ -416,13 +416,13 @@ async def view_crew(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     is_own = crew["creator_id"] == viewer_uid
     is_member = viewer_uid in member_uids
     if not is_past and not is_own and not is_member and not has_pending:
-        buttons.append([InlineKeyboardButton("🙋 Request to join", callback_data=f"join_{crew_id}")])
+        buttons.append([InlineKeyboardButton("🙋 Хочу вписаться", callback_data=f"join_{crew_id}")])
 
     back_cb = "my_crews_past" if is_past else "find_crew"
-    back_label = "⬅️ Back" if is_past else "⬅️ Back to crews"
+    back_label = "⬅️ Назад" if is_past else "⬅️ К гэнгам"
     buttons.append([
         InlineKeyboardButton(back_label, callback_data=back_cb),
-        InlineKeyboardButton("🏠 Main menu", callback_data="main_menu"),
+        InlineKeyboardButton("🏠 Главная", callback_data="main_menu"),
     ])
     await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(buttons))
 
@@ -441,7 +441,7 @@ async def member_profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         print(f"DB error loading member profile: {e}")
         p = {}
 
-    name = p.get("first_name", "Unknown")
+    name = p.get("first_name", "Неизвестно")
     username = p.get("username")
 
     text = f"👤 *{name}*"
@@ -450,10 +450,10 @@ async def member_profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     buttons = []
     if username:
-        buttons.append([InlineKeyboardButton("💬 Open Telegram", url=f"https://t.me/{username}")])
+        buttons.append([InlineKeyboardButton("💬 Написать", url=f"https://t.me/{username}")])
     buttons.append([
-        InlineKeyboardButton("⬅️ Back to crew", callback_data=f"view_crew_{crew_id}"),
-        InlineKeyboardButton("🏠 Main menu",     callback_data="main_menu"),
+        InlineKeyboardButton("⬅️ К гэнгу", callback_data=f"view_crew_{crew_id}"),
+        InlineKeyboardButton("🏠 Главная", callback_data="main_menu"),
     ])
     await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(buttons))
 
@@ -478,17 +478,17 @@ async def request_join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
     except Exception as e:
         print(f"DB error checking join request: {e}")
-        await query.answer("Something went wrong. Please try again.", show_alert=True)
+        await query.answer("Что-то пошло не так. Попробуй ещё раз.", show_alert=True)
         return
 
     if not crew:
-        await query.answer("Crew not found.", show_alert=True)
+        await query.answer("Гэнг не найден.", show_alert=True)
         return
     if crew["creator_id"] == uid:
-        await query.answer("That's your own crew!", show_alert=True)
+        await query.answer("Это твой гэнг!", show_alert=True)
         return
     if existing_result.data:
-        await query.answer("You already sent a request to this crew.", show_alert=True)
+        await query.answer("Ты уже отправил заявку в этот гэнг.", show_alert=True)
         return
 
     await query.answer()
@@ -507,22 +507,22 @@ async def request_join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         req_id = req_result.data[0]["id"]
     except Exception as e:
         print(f"DB error creating join request: {e}")
-        await query.edit_message_text("Failed to send request. Please try again.")
+        await query.edit_message_text("Не удалось отправить заявку. Попробуй ещё раз.")
         return
 
     await query.edit_message_text(
-        "✅ *Join request sent to the crew creator.*\n\nYou'll be notified when they respond.",
+        "✅ *Заявка отправлена.*\n\nОповестим, как только ответят.",
         parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")]]),
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Главная", callback_data="main_menu")]]),
     )
 
     uname_line = f"\n@{update.effective_user.username}" if update.effective_user.username else ""
-    notif_text = f"🙋 *New join request for Crew #{crew_id}*\n\n{update.effective_user.first_name}{uname_line}"
+    notif_text = f"🙋 *К вам хочет вписаться человек (гэнг #{crew_id})*\n\n{update.effective_user.first_name}{uname_line}"
     notif_kb = InlineKeyboardMarkup([
-        [InlineKeyboardButton("👤 View requester", callback_data=f"jview_{req_id}")],
+        [InlineKeyboardButton("👤 Посмотреть профиль", callback_data=f"jview_{req_id}")],
         [
-            InlineKeyboardButton("✅ Accept",  callback_data=f"jaccept_{req_id}"),
-            InlineKeyboardButton("❌ Decline", callback_data=f"jdecline_{req_id}"),
+            InlineKeyboardButton("✅ Берём",       callback_data=f"jaccept_{req_id}"),
+            InlineKeyboardButton("❌ Не сегодня", callback_data=f"jdecline_{req_id}"),
         ],
     ])
     try:
@@ -544,17 +544,17 @@ async def jview(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         req_result = sb.table("join_requests").select("requester_id, crew_id, status").eq("id", req_id).execute()
         if not req_result.data:
-            await query.edit_message_text("Request not found.")
+            await query.edit_message_text("Заявка не найдена.")
             return
         req = req_result.data[0]
         profile_result = sb.table("profiles").select("first_name, username").eq("telegram_id", req["requester_id"]).execute()
         p = profile_result.data[0] if profile_result.data else {}
     except Exception as e:
         print(f"DB error loading join request: {e}")
-        await query.edit_message_text("Failed to load request. Please try again.")
+        await query.edit_message_text("Не удалось загрузить заявку. Попробуй ещё раз.")
         return
 
-    name = p.get("first_name", "Unknown")
+    name = p.get("first_name", "Неизвестно")
     username = p.get("username")
     text = f"👤 *{name}*"
     if username:
@@ -562,10 +562,10 @@ async def jview(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     buttons = []
     if username:
-        buttons.append([InlineKeyboardButton("💬 Open Telegram", url=f"https://t.me/{username}")])
+        buttons.append([InlineKeyboardButton("💬 Написать", url=f"https://t.me/{username}")])
     buttons.append([
-        InlineKeyboardButton("✅ Accept",  callback_data=f"jaccept_{req_id}"),
-        InlineKeyboardButton("❌ Decline", callback_data=f"jdecline_{req_id}"),
+        InlineKeyboardButton("✅ Берём",       callback_data=f"jaccept_{req_id}"),
+        InlineKeyboardButton("❌ Не сегодня", callback_data=f"jdecline_{req_id}"),
     ])
     await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(buttons))
 
@@ -578,7 +578,7 @@ async def jaccept(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         req_result = sb.table("join_requests").select("*").eq("id", req_id).execute()
         if not req_result.data or req_result.data[0]["status"] != "pending":
-            await query.edit_message_text("This request is no longer pending.")
+            await query.edit_message_text("Заявка уже не актуальна.")
             return
         req = req_result.data[0]
 
@@ -599,31 +599,31 @@ async def jaccept(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             creator_p = creator_result.data[0] if creator_result.data else {}
     except Exception as e:
         print(f"DB error accepting request: {e}")
-        await query.edit_message_text("Failed to accept request. Please try again.")
+        await query.edit_message_text("Не удалось принять заявку. Попробуй ещё раз.")
         return
 
-    name = requester_p.get("first_name", "Unknown")
+    name = requester_p.get("first_name", "Неизвестно")
     r_uname = requester_p.get("username")
     host_uname = creator_p.get("username")
 
     creator_buttons = []
     if r_uname:
-        creator_buttons.append([InlineKeyboardButton(f"💬 Message {name}", url=f"https://t.me/{r_uname}")])
-    creator_buttons.append([InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")])
+        creator_buttons.append([InlineKeyboardButton(f"💬 Написать {name}", url=f"https://t.me/{r_uname}")])
+    creator_buttons.append([InlineKeyboardButton("🏠 Главная", callback_data="main_menu")])
     await query.edit_message_text(
-        f"✅ *{name} joined your crew.*",
+        f"✅ *{name} теперь в твоём гэнге.*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(creator_buttons),
     )
 
     req_buttons = []
     if host_uname:
-        req_buttons.append([InlineKeyboardButton("💬 Message host", url=f"https://t.me/{host_uname}")])
-    req_buttons.append([InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")])
+        req_buttons.append([InlineKeyboardButton("💬 Написать создателю", url=f"https://t.me/{host_uname}")])
+    req_buttons.append([InlineKeyboardButton("🏠 Главная", callback_data="main_menu")])
     try:
         await context.bot.send_message(
             chat_id=req["requester_id"],
-            text=f"🎉 *You've been accepted to Crew #{req['crew_id']}!*",
+            text=f"🎉 *Тебя приняли в ГЭНГ #{req['crew_id']}*\n\nНе облажайся.",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(req_buttons),
         )
@@ -639,27 +639,27 @@ async def jdecline(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         req_result = sb.table("join_requests").select("requester_id, crew_id, status").eq("id", req_id).execute()
         if not req_result.data or req_result.data[0]["status"] != "pending":
-            await query.edit_message_text("This request is no longer pending.")
+            await query.edit_message_text("Заявка уже не актуальна.")
             return
         req = req_result.data[0]
         profile_result = sb.table("profiles").select("first_name").eq("telegram_id", req["requester_id"]).execute()
-        first_name = profile_result.data[0].get("first_name", "Unknown") if profile_result.data else "Unknown"
+        first_name = profile_result.data[0].get("first_name", "Неизвестно") if profile_result.data else "Неизвестно"
         sb.table("join_requests").update({"status": "declined"}).eq("id", req_id).execute()
     except Exception as e:
         print(f"DB error declining request: {e}")
-        await query.edit_message_text("Failed to decline request. Please try again.")
+        await query.edit_message_text("Не удалось отклонить заявку. Попробуй ещё раз.")
         return
 
     await query.edit_message_text(
-        f"❌ Request from *{first_name}* declined.",
+        f"❌ Заявка от *{first_name}* отклонена.",
         parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")]]),
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Главная", callback_data="main_menu")]]),
     )
     try:
         await context.bot.send_message(
             chat_id=req["requester_id"],
-            text=f"Your request to Crew #{req['crew_id']} wasn't accepted.",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")]]),
+            text=f"В этот гэнг не залетело.\nНичего, найдём другой.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Главная", callback_data="main_menu")]]),
         )
     except Exception:
         pass
@@ -681,61 +681,61 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             ]
         except Exception as e:
             print(f"DB error loading crews: {e}")
-            await query.edit_message_text("Failed to load crews. Please try again.")
+            await query.edit_message_text("Не удалось загрузить гэнги. Попробуй ещё раз.")
             return
 
         visible.sort(key=lambda c: c.get("event_date") or "9999-12-31")
 
         if not visible:
             await query.edit_message_text(
-                "👯 *No crews yet.* Check back soon!",
+                "👯 *Гэнгов пока нет.* Возвращайся позже!",
                 parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")]]),
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Главная", callback_data="main_menu")]]),
             )
             return
 
-        lines = ["👯 *Crews looking for people*\n"]
+        lines = ["👯 *Гэнги ищут людей*\n"]
         buttons = []
         for c in visible:
             lines.append(_crew_card(c) + "\n")
-            buttons.append([InlineKeyboardButton(f"View crew #{c['id']}", callback_data=f"view_crew_{c['id']}")])
-        buttons.append([InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")])
+            buttons.append([InlineKeyboardButton(f"Смотреть гэнг #{c['id']}", callback_data=f"view_crew_{c['id']}")])
+        buttons.append([InlineKeyboardButton("🏠 Главная", callback_data="main_menu")])
         await query.edit_message_text("\n".join(lines), parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(buttons))
 
     elif query.data == "my_crews":
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔥 Active crews", callback_data="my_crews_active")],
-            [InlineKeyboardButton("🗂 Past crews",   callback_data="my_crews_past")],
-            [InlineKeyboardButton("🏠 Main menu",    callback_data="main_menu")],
+            [InlineKeyboardButton("🔥 Активные гэнги", callback_data="my_crews_active")],
+            [InlineKeyboardButton("🗂 Архив",           callback_data="my_crews_past")],
+            [InlineKeyboardButton("🏠 Главная",         callback_data="main_menu")],
         ])
-        await query.edit_message_text("🔥 *My crews*", parse_mode="Markdown", reply_markup=keyboard)
+        await query.edit_message_text("🔥 *Мои гэнги*", parse_mode="Markdown", reply_markup=keyboard)
 
     elif query.data == "my_crews_active":
         try:
             all_crews = _get_user_crews(uid)
         except Exception as e:
             print(f"DB error loading my crews (active): {e}\n{traceback.format_exc()}")
-            await query.edit_message_text("Failed to load your crews. Please try again.")
+            await query.edit_message_text("Не удалось загрузить гэнги. Попробуй ещё раз.")
             return
 
         active = [c for c in all_crews if c.get("status") == "active" and not _is_past_crew(c)]
         active.sort(key=lambda c: c.get("event_date") or "9999-12-31")
 
         back_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("⬅️ Back", callback_data="my_crews")],
-            [InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")],
+            [InlineKeyboardButton("⬅️ Назад", callback_data="my_crews")],
+            [InlineKeyboardButton("🏠 Главная", callback_data="main_menu")],
         ])
         if not active:
-            await query.edit_message_text("You have no active crews.", reply_markup=back_kb)
+            await query.edit_message_text("Активных гэнгов нет.", reply_markup=back_kb)
             return
 
-        lines = ["🔥 *Active crews*\n"]
+        lines = ["🔥 *Активные гэнги*\n"]
         buttons = []
         for c in active:
             lines.append(_crew_card(c) + "\n")
-            buttons.append([InlineKeyboardButton(f"View crew #{c['id']}", callback_data=f"view_crew_{c['id']}")])
-        buttons.append([InlineKeyboardButton("⬅️ Back", callback_data="my_crews")])
-        buttons.append([InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")])
+            buttons.append([InlineKeyboardButton(f"Смотреть гэнг #{c['id']}", callback_data=f"view_crew_{c['id']}")])
+        buttons.append([InlineKeyboardButton("⬅️ Назад", callback_data="my_crews")])
+        buttons.append([InlineKeyboardButton("🏠 Главная", callback_data="main_menu")])
         await query.edit_message_text("\n".join(lines), parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(buttons))
 
     elif query.data == "my_crews_past":
@@ -743,27 +743,27 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             all_crews = _get_user_crews(uid)
         except Exception as e:
             print(f"DB error loading my crews (past): {e}\n{traceback.format_exc()}")
-            await query.edit_message_text("Failed to load your crews. Please try again.")
+            await query.edit_message_text("Не удалось загрузить гэнги. Попробуй ещё раз.")
             return
 
         past = [c for c in all_crews if _is_past_crew(c) or c.get("status") == "archived"]
         past.sort(key=lambda c: c.get("event_date") or "0000-01-01", reverse=True)
 
         back_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("⬅️ Back", callback_data="my_crews")],
-            [InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")],
+            [InlineKeyboardButton("⬅️ Назад", callback_data="my_crews")],
+            [InlineKeyboardButton("🏠 Главная", callback_data="main_menu")],
         ])
         if not past:
-            await query.edit_message_text("You have no past crews.", reply_markup=back_kb)
+            await query.edit_message_text("Прошлых гэнгов нет.", reply_markup=back_kb)
             return
 
-        lines = ["🗂 *Past crews*\n"]
+        lines = ["🗂 *Архив гэнгов*\n"]
         buttons = []
         for c in past:
             lines.append(_crew_card(c) + "\n")
-            buttons.append([InlineKeyboardButton(f"View crew #{c['id']}", callback_data=f"view_crew_{c['id']}")])
-        buttons.append([InlineKeyboardButton("⬅️ Back", callback_data="my_crews")])
-        buttons.append([InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")])
+            buttons.append([InlineKeyboardButton(f"Смотреть гэнг #{c['id']}", callback_data=f"view_crew_{c['id']}")])
+        buttons.append([InlineKeyboardButton("⬅️ Назад", callback_data="my_crews")])
+        buttons.append([InlineKeyboardButton("🏠 Главная", callback_data="main_menu")])
         await query.edit_message_text("\n".join(lines), parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(buttons))
 
     elif query.data == "my_profile":
@@ -779,7 +779,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             print(f"DB error loading profile: {e}")
             p = {}
 
-        name = p.get("first_name") or update.effective_user.first_name or "Unknown"
+        name = p.get("first_name") or update.effective_user.first_name or "Неизвестно"
         username = p.get("username") or update.effective_user.username
         text = f"👤 *{name}*"
         if username:
@@ -787,14 +787,14 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await query.edit_message_text(
             text,
             parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Main menu", callback_data="main_menu")]]),
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Главная", callback_data="main_menu")]]),
         )
 
     elif query.data == "main_menu":
         await query.edit_message_text(MAIN_MENU_TEXT, parse_mode="Markdown", reply_markup=MAIN_MENU_KEYBOARD)
 
     else:
-        await query.edit_message_text("Unknown action.")
+        await query.edit_message_text("Неизвестное действие.")
 
 
 # ── App setup ───────────────────────────────────────────────────────────────

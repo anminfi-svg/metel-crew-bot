@@ -57,10 +57,17 @@ VIBE_LABELS = {
 }
 
 
+_RU_MONTHS = {
+    1: "янв", 2: "фев", 3: "мар", 4: "апр",
+    5: "май", 6: "июн", 7: "июл", 8: "авг",
+    9: "сен", 10: "окт", 11: "ноя", 12: "дек",
+}
+
+
 def _format_date(date_str: str) -> str:
     try:
         d = datetime.strptime(date_str, "%Y-%m-%d").date()
-        return f"{d.strftime('%b')} {d.day}"
+        return f"{_RU_MONTHS[d.month]} {d.day}"
     except Exception:
         return date_str
 
@@ -247,7 +254,8 @@ async def vibe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def area(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    context.user_data["area"] = query.data.removeprefix("area_")
+    raw_area = query.data.removeprefix("area_")
+    context.user_data["area"] = "Другое" if raw_area == "Other" else raw_area
 
     keyboard = InlineKeyboardMarkup([[
         InlineKeyboardButton("Пропустить", callback_data="msg_skip"),
